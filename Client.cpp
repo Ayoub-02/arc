@@ -1,14 +1,13 @@
 #include "Client.hpp"
 
-Client::Client(int socket)
+Client::Client(int fd) : fd(fd)
 {
-    this->socket = socket;
     nickname = "";
     username = "";
     hostname = "";
     realname = "";
-    isauthenticated = false;
-    isregistered = false;
+    isAuthenticated = false;
+    isRegistered = false;
     buffer = "";
 };
 
@@ -17,87 +16,105 @@ Client::~Client()
 
 };
 
-int Client::getsocket()
+int Client::getFd()
 {
-    return (socket);
+    return (fd);
 };
 
-std::string Client::getusername()
+std::string Client::getUsername()
 {
     return (username);
 };
 
-std::string Client::getnickname()
+std::string Client::getNickname()
 {
     return (nickname);
 };
 
-std::string Client::gethostname()
+std::string Client::getHostname()
 {
     return (hostname);
 };
 
-std::string Client::getrealname()
+std::string Client::getRealname()
 {
     return (realname);
 };
 
 
-bool  Client::getisauthenticated()
+bool  Client::getIsAuthenticated()
 {
-    return (isauthenticated);
+    return (isAuthenticated);
 };
 
-bool Client::getisregistered()
+bool Client::getIsRegistered()
 {
-    return (isregistered);
+    return (isRegistered);
 };
 
-std::string Client::getbuffer()
+std::string Client::getBuffer()
 {
     return (buffer);
 };
-
-void Client::setsocket(int socket)
+std::string& Client::getBufferRef()
 {
-    this->socket = socket;
+    std::string &bufRef = buffer;
+    return (bufRef);
+};
+
+void Client::setFd(int fd)
+{
+    this->fd = fd;
 };
 
 
-void Client::setusername(std::string username)
+void Client::setUsername(std::string& username)
 {
     this->username = username;
 };
 
-void    Client::setnickname(std::string nickname)
+void    Client::setNickname(std::string& nickname)
 {
     this->nickname = nickname;
 };
 
-void     Client::sethostname(std::string hostname)
+void     Client::setHostname(std::string& hostname)
 {
     this->hostname = hostname;
 };
 
 
-void     Client::setrealname(std::string realname)
+void     Client::setRealname(std::string& realname)
 {
     this->realname = realname;
 };
 
 
-void Client::setisauthenticated(bool value)
+void Client::setIsAuthenticated(bool value)
 {
-    isauthenticated = value;
+    isAuthenticated = value;
 };
 
 
-void    Client::setisregistered(bool value)
+void    Client::setIsRegistered(bool value)
 {
-    isregistered = value;
+    isRegistered = value;
 };
+void Client::appendBuffer(std::string data)
+{
+    buffer += data;
+}
 
-std::string Client::getbuffer(std::string buffer)
+// Remove first n characters from buffer (after processing a command)
+void Client::eraseBuffer(size_t n)
 {
-    this->buffer = buffer;
-};
+    if (n >= buffer.size())
+        buffer.clear();
+    else
+        buffer.erase(0, n);
+}
+
+std::string Client::getPrefix() const
+{
+    return nickname + "!" + username + "@" + hostname;
+}

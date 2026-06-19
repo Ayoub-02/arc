@@ -1,9 +1,15 @@
 #include "channel.hpp"
+#include "Client.hpp"
 
 Channel::Channel(std::string name)
 {
     this->name = name;
-    
+    topic = "";
+    password = "";
+    user_limit = 0;
+    invite_only = false;
+    topic_restricted = false;
+
 };
 
 Channel::~Channel()
@@ -40,6 +46,16 @@ bool Channel::istopicrestricted()
     return (topic_restricted);
 };
 
+std::vector<Client*> Channel::getmembers()
+{
+    return (members);
+};
+
+std::vector<Client*> Channel::getoperators()
+{
+    return (operators);
+};
+
 void    Channel::settopic(std::string topic)
 {
     this->topic = topic;
@@ -66,4 +82,81 @@ void    Channel::settopicrestricted(bool topic_restricted)
     this->topic_restricted = topic_restricted;
 };
 
-Channel::
+
+void    Channel::addmember(Client *client)
+{
+    if (!ismember(client))
+        members.push_back(client);
+};
+
+void    Channel::removememeber(Client *client)
+{
+    size_t i = 0;
+    while (i < members.size())
+    {
+        if (members[i] == client)
+        {
+            members.erase(members.begin() + i);
+            break;
+        } 
+        i++;
+    }
+    removeoperator(client);
+};
+
+bool Channel::ismember(Client *client)
+{
+    size_t i = 0;
+    while (i < members.size())
+    {
+        if (members[i] == client)
+            return (true);
+        i++;
+    }
+    return (false);
+};
+
+void    Channel::addoperator(Client *client)
+{
+    if (ismember(client) && !isoperator(client))
+        operators.push_back(client);  
+};
+
+void    Channel::removeoperator(Client *client)
+{
+    size_t i = 0;
+
+    while (i < operators.size())
+    {
+        if (operators[i] == client)
+        {
+             operators.erase(operators.begin() + i);
+             break;
+        }
+        i++;
+    }
+};
+
+bool Channel::isoperator(Client *client)
+{
+    size_t i = 0;
+    while (i < operators.size())
+    {
+        if (operators[i] == client)
+            return (true);
+        i++;
+    }
+    return (false);
+};
+
+void    Channel::broadcast(std::string msg, Client *sender)
+{
+    std::string fullmsg = msg + "\r\n";
+    size_t i = 0;
+    while (i < members.size())
+    {
+        if (members[i] != sender)
+            send(members[i]->getFd(), fullmsg.c_str(),  fullmsg.size(), 0);
+        i++;
+    }
+};
