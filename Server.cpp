@@ -1,10 +1,23 @@
 #include "Server.hpp"
 
+Server::NetworkException::NetworkException(const char* _msg) : msg(_msg) {}
+
+const char* Server::NetworkException::what() const throw() {
+    return msg;
+}
+
 Server::Server(int _port, const std::string& _password) : port(_port), serverFd(-1), password(_password) {}
 Server::~Server()
 {
 	if (serverFd != -1)
 		close(serverFd);
+}
+
+bool Server::signalFlag = false;
+void Server::handleSignal(int signum)
+{
+	(void)signum;
+	Server::signalFlag = true;
 }
 
 void Server::initSocket()
@@ -29,6 +42,11 @@ void Server::initSocket()
 	addr.sin_addr.s_addr = INADDR_ANY; //listen to every network connection available on the computer.
 	addr.sin_port = htons(port);
 
+	if (fcntl(serverFd, F_SETFL, O_NONBLOCK) == -1)
+	{
+		perror("file control");
+		exit(EXIT_FAILURE);
+	}
 	if (bind(serverFd, (sockaddr*)&addr, sizeof(addr)) < 0)
 	{
 		perror("bind");
@@ -54,7 +72,7 @@ void Server::initSocket()
 
 void Server::startServer()
 {
-	while (true)
+	while (!signalFlag)
 	{
 		int ret = poll(&fds[0], fds.size(), -1);
 		if (ret < 0)
@@ -103,6 +121,104 @@ void Server::acceptNewClient()
 	std::cout << "New client connected! FD = " << clientFd << std::endl;
 }
 
+ParsedMessage Server::parseMessage(const std::string& rawMessage) {
+    ParsedMessage msg;
+    std::string str = rawMessage;
+
+    size_t start = str.find_first_not_of(' ');
+    if (start != std::string::npos)
+		str = str.substr(start);
+
+    size_t pos = str.find(' ');
+    if (pos != std::string::npos)
+	{
+        msg.command = str.substr(0, pos);
+        str.erase(0, pos);
+    }
+	else 
+	{
+        msg.command = str;
+        return msg;
+    }
+
+    while (!str.empty())
+	{
+        start = str.find_first_not_of(' ');
+        if (start == std::string::npos)
+			break;
+        str = str.substr(start);
+
+        if (str[0] == ':') 
+		{
+            msg.trailing = str.substr(1);
+            break;
+        }
+
+        pos = str.find(' ');
+        if (pos != std::string::npos)
+		{
+            msg.params.push_back(str.substr(0, pos));
+            str.erase(0, pos);
+        }
+		else 
+		{
+            msg.params.push_back(str);
+            break;
+        }
+    }
+    return msg;
+}
+
+CommandType Server::getCommandType(const std::string& cmd)
+{
+    if (cmd == "PASS") return CMD_PASS;
+    if (cmd == "NICK") return CMD_NICK;
+    if (cmd == "USER") return CMD_USER;
+    if (cmd == "QUIT") return CMD_QUIT;
+    if (cmd == "JOIN") return CMD_JOIN;
+    if (cmd == "PART") return CMD_PART;
+    if (cmd == "TOPIC") return CMD_TOPIC;
+    if (cmd == "INVITE") return CMD_INVITE;
+    if (cmd == "KICK") return CMD_KICK;
+    if (cmd == "MODE") return CMD_MODE;
+    if (cmd == "PRIVMSG") return CMD_PRIVMSG;
+    return CMD_UNKNOWN;
+}
+
+void Server::routeCommand(int client_fd, const ParsedMessage& msg)
+{
+	std::string cmd = msg.command;
+    for (size_t i = 0; i < cmd.length(); ++i)
+        cmd[i] = toupper(cmd[i]);
+
+	Client* current_client = clients[client_fd];
+	CommandType type = getCommandType(cmd);
+    switch (type) {
+        case CMD_PASS:
+        case CMD_NICK:
+        case CMD_USER:
+        case CMD_QUIT:
+        case CMD_PRIVMSG:
+            handleClientCommand(current_client, msg, this);
+            break;
+
+        case CMD_JOIN:
+        case CMD_PART:
+        case CMD_TOPIC:
+        case CMD_INVITE:
+        case CMD_KICK:
+        case CMD_MODE:
+            handleChannelCommand(current_client, msg, this);
+            break;
+
+        case CMD_UNKNOWN:
+        default:
+            std::cout << "Network: Unhandled command '" << cmd << "' received from FD " << client_fd << std::endl;
+            // Teammate will likely send back 421 ERR_UNKNOWNCOMMAND here
+            break;
+    }	
+}
+
 void Server::handleClient(int index)
 {
 	int fd = fds[index].fd;
@@ -116,10 +232,7 @@ void Server::handleClient(int index)
 	if (bytes <= 0)
 	{
 		std::cout << "Client disconnected FD = " << fds[index].fd << std::endl;
-		close(fd);
-		delete clients[fd];
-		clients.erase(fd);
-		fds.erase(fds.begin() + index);
+		disconnectClient(fd);
 		return;
 	}
 
@@ -135,14 +248,42 @@ void Server::handleClient(int index)
 
 		std::cout << "Full message: [" << message << "]" << std::endl;
 
-		// parse mehdi belkass
-		ParsedMessage parsed = parseMessage(message);
+		// parse
+		ParsedMessage parsedMsg = parseMessage(message);
 
 		//Debug (remove after)
-		std::cout << "CMD: " << parsed.command << std::endl;
-
+		std::cout << "CMD: " << parsedMsg.command << std::endl;
+		routeCommand(fd, parsedMsg);
 		//Exexute
 
 	}
 }
 
+void Server::disconnectClient(int fd)
+{
+	if (clients.find(fd) == clients.end())
+		return;
+	close(fd); // Review after
+	delete clients[fd];
+	clients.erase(fd);
+
+    for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it) 
+	{
+        if (it->fd == fd)
+		{
+            fds.erase(it);
+            break;
+        }
+    }
+}
+
+void Server::cleanup()
+{
+	for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		close(it->first);
+		delete it->second;
+	}
+	if (serverFd != -1)
+		close(serverFd);
+}
