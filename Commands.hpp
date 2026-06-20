@@ -6,3 +6,4 @@
 
 
 void    handleJoin(Client* client, std::vector<std::string> params, Server* server);
+void    handlePart(Client* client, std::vector<std::string> params, Server* server);

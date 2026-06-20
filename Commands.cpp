@@ -78,3 +78,47 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
         send(client->getFd(), endNames.c_str(), endNames.size(), 0);
     }
 };
+
+
+void    handlePart(Client* client, std::vector<std::string> params, Server* server)
+{
+    if (!client->getIsRegistered())
+    {
+        std::string msg = "451 " + client->getNickname() + " :You have not registered\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    if (params.empty())
+    {
+        std::string msg = "461 " + client->getNickname() + " PART :Not enough parameters\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    std::string channelName = params[0];
+    std::map<std::string, Channel*>& channels = server->getChannels();
+
+    if (channels.find(channelName) == channels.end())
+    {
+        std::string msg = "403 " + client->getNickname() + " " + channelName + " :No such channel\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return ;
+    }
+    Channel *channel = channels[channelName];
+
+    if (!channel->ismember(client))
+    {
+        std::string msg = "442" + client->getNickname() + " " +  channelName + " :You're not on that channel\r\n";
+        send(client->getFd() , msg.c_str() , msg.size() , 0);
+        return ;
+    }
+    std::string partMsg = ":" + client->getPrefix() + " PART " + channelName + "\r\n";
+    send(client->getFd() , partMsg.c_str() , partMsg.size(), 0);
+    channel->broadcast(":" + client->getPrefix() + " PART " + channelName, client);
+
+    channel->removememeber(client);
+    if (channel->getmembers().empty())
+    {
+        channels.erase(channelName);
+        delete channel;
+    }
+};
