@@ -103,7 +103,7 @@ void    Client::setIsRegistered(bool value)
 void Client::appendBuffer(std::string data)
 {
     buffer += data;
-}
+};
 
 // Remove first n characters from buffer (after processing a command)
 void Client::eraseBuffer(size_t n)
@@ -112,9 +112,9 @@ void Client::eraseBuffer(size_t n)
         buffer.clear();
     else
         buffer.erase(0, n);
-}
+};
 
 std::string Client::getPrefix() const
 {
     return nickname + "!" + username + "@" + hostname;
-}
+};
