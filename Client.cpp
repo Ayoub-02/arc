@@ -71,28 +71,28 @@ void Client::setFd(int fd)
     this->fd = fd;
 };
 
-void Client::setUsername(std::string& username)
+void Client::setUsername(const std::string& username)
 {
     this->username = username;
 };
 
-void    Client::setNickname(std::string& nickname) 
+void    Client::setNickname(const std::string& nickname)
 {
     this->nickname = nickname;
 };
 
-void     Client::setHostname(std::string& hostname)
+void     Client::setHostname(const std::string& hostname)
 {
     this->hostname = hostname;
 };
 
 
-void     Client::setRealname(std::string& realname)
+void     Client::setRealname(const std::string& realname)
 {
     this->realname = realname;
 };
 
-void Client::setServername(std::string& servername)
+void Client::setServername(const std::string& servername)
 {
     this->servername = servername;
 }

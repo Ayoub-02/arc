@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sys/socket.h>
+#include "Server.hpp"
 
 class Client
 {
@@ -34,11 +35,11 @@ public:
 
     // SETTERS
     void setFd(int fd);
-    void setUsername(std::string& username);
-    void setNickname(std::string& nickname);
-    void setHostname(std::string& hostname);
-    void setRealname(std::string& realname);
-    void setServername(std::string& realname);  //added by mehdi
+    void setUsername(const std::string& username);
+    void setNickname(const std::string& nickname);
+    void setHostname(const std::string& hostname);
+    void setRealname(const std::string& realname);
+    void setServername(const std::string& realname);  //added by mehdi
     void setIsAuthenticated(bool value);
     void setIsRegistered(bool value);
     void setBuffer(std::string buffer)

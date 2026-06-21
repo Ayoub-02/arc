@@ -7,18 +7,14 @@
 #include "channel.hpp"
 
 
+class Client;
+class Server;
+struct ParsedMessage;
 
-struct Command
-{
-    std::string command_name ;
-    std::vector<std::string> params;
-    std::string trailingMessage;
-};
-
-void handleNick(Client& client, Command& cmd, Server& server);
-void handlePass(Client& client, Command& cmd, Server& server);
-void handleUser(Client& client, Command& cmd, Server& server);
-void handleQuit(Client& client, Command& cmd, Server& server);
+void handleNick(Client& client, const ParsedMessage& cmd, Server& server);
+void handlePass(Client& client, const ParsedMessage& cmd, Server& server);
+void handleUser(Client& client, const ParsedMessage& cmd, Server& server);
+void handleQuit(Client& client, const ParsedMessage& cmd, Server& server);
 
 void sendToClient(int fd, const std::string& message);
 

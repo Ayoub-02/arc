@@ -191,7 +191,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
     for (size_t i = 0; i < cmd.length(); ++i)
         cmd[i] = toupper(cmd[i]);
 
-	// Client* current_client = clients[client_fd];
+	Client* current_client = clients[client_fd];
 	CommandType type = getCommandType(cmd);
     switch (type) {
         case CMD_PASS:
@@ -199,7 +199,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_USER:
         case CMD_QUIT:
         case CMD_PRIVMSG:
-            // handleClientCommand(current_client, msg, this);
+            handleClientCommand(*current_client, msg, *this);
             break;
 
         case CMD_JOIN:
@@ -228,7 +228,7 @@ void Server::handleClient(int index)
 	std::memset(buffer, 0, sizeof(buffer));
 
 	int bytes = recv(pollFds[index].fd, buffer, sizeof(buffer), 0);
-
+	
 	if (bytes <= 0)
 	{
 		std::cout << "Client disconnected FD = " << pollFds[index].fd << std::endl;
@@ -250,9 +250,10 @@ void Server::handleClient(int index)
 
 		// parse
 		ParsedMessage parsedMsg = parseMessage(message);
+		
 
 		//Debug (remove after)
-		std::cout << "CMD: " << parsedMsg.command << std::endl;
+		std::cout << "CMD: " << parsedMsg.command << " Trailing: " << parsedMsg.trailing << std::endl;
 		routeCommand(fd, parsedMsg);
 		//Exexute
 

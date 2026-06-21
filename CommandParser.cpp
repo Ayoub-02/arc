@@ -1,7 +1,6 @@
 #include "CommandParser.hpp"
 
-
-void handlePass(Client& client, Command& cmd, Server& server)
+void handlePass(Client& client, const ParsedMessage& cmd, Server& server)
 {
     if (client.getIsRegistered()) //is he already registred
     {
@@ -22,7 +21,7 @@ void handlePass(Client& client, Command& cmd, Server& server)
     client.setIsAuthenticated(true); // ya3ni password s7i7 but no registration yet
 }
 
-void handleNick(Client& client, Command& cmd, Server& server)   //li mora : kayt igonara this is valid -> NICK mehdi :mehdi : hufdsj
+void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li mora : kayt igonara this is valid -> NICK mehdi :mehdi : hufdsj
 {
     if (cmd.params.size() != 1) 
     {
@@ -42,8 +41,7 @@ void handleNick(Client& client, Command& cmd, Server& server)   //li mora : kayt
     client.setNickname(cmd.params[0]);
 }
 
-                                                             // USER   "mehdi"    belk      dfsfds :mehdi elk
-void handleUser(Client& client, Command& cmd, Server& server) //USER <username> <hostname> <servername> :<realname>
+void handleUser(Client& client, const ParsedMessage& cmd, Server& server)//USER <username> <hostname> <servername> :<realname>
 {
     if (!client.getIsAuthenticated())
     {
@@ -52,67 +50,28 @@ void handleUser(Client& client, Command& cmd, Server& server) //USER <username> 
     }
     if (client.getIsRegistered())
     {
-        sendToClient(client.getFd(), "462 ERR_ALREADYREGISTRED :\r\n"); //to look up
+        sendToClient(client.getFd(), "462 ERR_ALREADYREGISTRED :You may not reregister\r\n");
         return;
     }
-    if (cmd.params.size() < 3 || cmd.trailingMessage.empty())
+    if (cmd.params.size() < 3 || cmd.trailing.empty())
     {
         sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS USER :Not enough parameters\r\n");
-        return;
-    }
-    if (cmd.params[0].size() == 0 || (cmd.trailingMessage.size() == 0 || isspace(cmd.trailingMessage[0])))  //username and realname should not be empty
-    {
-        sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS USER :Not enough parameters\r\n");
-        return;
-    }
-    client.setUsername(cmd.params[0]);
-    client.setHostname(cmd.params[1]);
-    client.setServername(cmd.params[2]);
-    client.setRealname(cmd.trailingMessage);
-
-    if (client.getIsAuthenticated() && client.getNickname().size() != 0 
-        && client.getUsername().size() != 0)
-        {
-            client.setIsRegistered(true);
-        }
-}
-
-void handleUser(Client& client, Command& cmd, Server& server)
-{
-    if (!client.getIsAuthenticated())
-    {
-        sendToClient(client.getFd(),
-            "451 ERR_NOTREGISTERED :You have not registered\r\n");
-        return;
-    }
-    if (client.getIsRegistered())
-    {
-        sendToClient(client.getFd(),
-            "462 ERR_ALREADYREGISTRED :You may not reregister\r\n");
-        return;
-    }
-    if (cmd.params.size() < 3 || cmd.trailingMessage.empty())
-    {
-        sendToClient(client.getFd(),
-            "461 ERR_NEEDMOREPARAMS USER :Not enough parameters\r\n");
         return;
     }
     if (cmd.params[0].empty())
     {
-        sendToClient(client.getFd(),
-            "461 ERR_NEEDMOREPARAMS USER :Invalid username\r\n");
+        sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS USER :Invalid username\r\n");
         return;
     }
-    if (onlySpaces(cmd.trailingMessage))
+    if (onlySpaces(cmd.trailing))
     {
-        sendToClient(client.getFd(),
-            "461 ERR_NEEDMOREPARAMS USER :Invalid realname\r\n");
+        sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS USER :Invalid realname\r\n");
         return;
     }
     client.setUsername(cmd.params[0]);
     client.setHostname(cmd.params[1]);
     client.setServername(cmd.params[2]);
-    client.setRealname(cmd.trailingMessage);
+    client.setRealname(cmd.trailing);
 
     if (client.getIsAuthenticated()
         && !client.getNickname().empty()
@@ -122,11 +81,11 @@ void handleUser(Client& client, Command& cmd, Server& server)
     }
 }
 
-void handleQuit(Client& client, Command& cmd, Server& server)
+void handleQuit(Client& client, const ParsedMessage& cmd, Server& server)
 {
     std::string reason;
-    if (!cmd.trailingMessage.empty())
-        reason = cmd.trailingMessage;
+    if (!cmd.trailing.empty())
+        reason = cmd.trailing;
     else if (!cmd.params.empty())
         reason = cmd.params[0];
     
@@ -134,9 +93,6 @@ void handleQuit(Client& client, Command& cmd, Server& server)
     // server.removeMemberFromAllChannels(client);
     server.disconnectClient(client.getFd());
 
-    
-
-    
     
 
 

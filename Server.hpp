@@ -13,6 +13,10 @@
 #include <sstream>
 #include <csignal>
 #include "Client.hpp"
+#include "CommandParser.hpp"
+
+
+class Client;
 
 enum CommandType {
     CMD_PASS, CMD_NICK,
@@ -72,4 +76,5 @@ public:
 	bool isNickTaken(std::string nickname);
 	void disconnectClient(int fd);
 	void cleanup();
+	void handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server);
 };

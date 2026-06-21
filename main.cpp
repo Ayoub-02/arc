@@ -2,30 +2,40 @@
 #include "CommandParser.hpp"
 #include "Client.hpp"
 
-int main()
+#include "Server.hpp"
+
+int main(int argc, char **argv)
 {
-    Client client(2);
-    // client.setBuffer("USER username 0  * :\r\n");
+	if (argc != 3)
+	{
+		std::cerr << "Usage ./ircserv <port> <password>" << std::endl;
+		return 1;
+	}
 
-    // Command cmd;
-    Server server;
-    // parseCommand(client, cmd, server);
-    
+	Server server(atoi(argv[1]), argv[2]);
+	
+	try
+	{
+		signal(SIGINT, Server::handleSignal);
+    	signal(SIGTERM, Server::handleSignal);
+    	signal(SIGPIPE, SIG_IGN);
 
-    Command cmd;
-    cmd.command_name = "USER";
-    cmd.params.push_back("dfv");
-    cmd.params.push_back("0");
-    cmd.params.push_back("*");
-    cmd.params.push_back("hi");
-    client.setIsAuthenticated(1);
-    client.setIsRegistered(1);
 
-    handleUser(client, cmd, server);
-    // std::cout << "thats the command name: " << std::endl;
-    // std::cout << cmd.command_name << std::endl;
-    // std::cout << "and thats the arguments: " << std::endl;
-    // for (size_t i = 0; i < cmd.params.size(); i++)
-    //     std::cout << cmd.params[i] << std::endl;
+		std::cout << "Booting up the server ..." << std::endl;
+		server.initSocket();
+
+		std::cout << "Init complete, multiplexing time ...." << std::endl;
+	
+		server.startServer();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << "Server Fatal Error: " << e.what() << std::endl;
+		server.cleanup();
+        return 1;
+	}
+
+	std::cout << "\nSignal received. Shutting down gracefully..." << std::endl;
+    server.cleanup();
+	std::cout << "The Server Closed!" << std::endl;
 }
-  
