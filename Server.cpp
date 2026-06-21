@@ -152,3 +152,27 @@ std::map<std::string, Channel*>& Server::getChannels()
 	return (channels);
 };
 
+
+void	Server::removeMemberFromAllChannels(Client &client)
+{
+	std::map<std::string, Channel*>::iterator it = channels.begin();
+	while (it != channels.end())
+	{
+		if (it->second->ismember(&client))
+		{
+			it->second->removememeber(&client);
+			if (it->second->getmembers().empty())
+            {
+                delete it->second;
+                std::map<std::string, Channel*>::iterator toErase = it;
+                it++;
+                channels.erase(toErase);
+                continue;
+            }
+		}	
+		it++;
+	}
+};
+
+
+

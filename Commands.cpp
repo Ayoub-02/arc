@@ -80,7 +80,7 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
 };
 
 
-void    handlePart(Client* client, std::vector<std::string> params, Server* server)
+void    handlePart(Client* client, std::vector<std::string> params, std::string trailing, Server* server)
 {
     if (!client->getIsRegistered())
     {
@@ -121,4 +121,62 @@ void    handlePart(Client* client, std::vector<std::string> params, Server* serv
         channels.erase(channelName);
         delete channel;
     }
+};
+
+void    handleTopic(Client *client, std::vector<std::string> params, std::string trailing, Server *server)
+{
+    if (!client->getIsRegistered())
+    {
+        std::string msg = "451 " + client->getNickname() + " :You have not registered\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return ;
+    }
+    if (params.empty())
+    {
+        std::string msg = "461 " + client->getNickname() + " TOPIC :Not enough parameters\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    std::string channelName = params[0];
+    std::map<std::string, Channel*> channels = server->getChannels();
+    if (channels.find(channelName) == channels.end())
+    {
+        std::string msg = "442 " + client->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        send(client->getFd() , msg.c_str(), msg.size(), 0);
+        return ;
+    }
+    Channel *channel = channels[channelName];
+    if (!channel->ismember(client))
+    {
+        std::string msg = "442 " + client->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        send(client->getFd() , msg.c_str(), msg.size(), 0);
+        return ;
+    }
+    //VIEW TOPIC CASE
+    if (trailing.empty())
+    {
+        if (channel->gettopic().empty())
+        {
+            std::string msg = "331 " + client->getNickname() + " " + channelName + " :No topic is set\r\n";
+            send(client->getFd(), msg.c_str(), msg.size(), 0);
+        }
+        else
+        {
+            std::string msg = "332 " + client->getNickname() + " " + channelName + " :" + channel->gettopic() + "\r\n";
+            send(client->getFd(), msg.c_str(), msg.size(), 0);
+        }
+        return ;
+    }
+
+    // SET TOPIC
+    if (channel->istopicrestricted() && !channel->isoperator(client))
+    {
+        std::string msg = "482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    channel->settopic(trailing);
+    std::string topicMsg = ":" + client->getPrefix() + " TOPIC " + channelName + " :" + trailing + "\r\n";
+    send(client->getFd(), topicMsg.c_str(), topicMsg.size(), 0);
+    channel->broadcast(":" + client->getPrefix() + " TOPIC " + channelName + " :" + trailing, client);
 };
