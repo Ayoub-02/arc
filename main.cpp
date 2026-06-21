@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 		std::cout << "Booting up the server ..." << std::endl;
 		server.initSocket();
 
-		std::cout << "Inti complete, multiplexing time ....";
+		std::cout << "Init complete, multiplexing time ...." << std::endl;
 	
 		server.startServer();
 	}
@@ -30,5 +30,8 @@ int main(int argc, char **argv)
 		server.cleanup();
         return 1;
 	}
+
+	std::cout << "\nSignal received. Shutting down gracefully..." << std::endl;
+    server.cleanup();
 	std::cout << "The Server Closed!" << std::endl;
 }

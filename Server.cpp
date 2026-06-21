@@ -20,21 +20,29 @@ void Server::handleSignal(int signum)
 	Server::signalFlag = true;
 }
 
+int Server::getServerFd() { return serverFd; }
+std::map<int, Client*>& Server::getClients() { return clients; }
+Client* Server::getClient(int fd)
+{
+    if (clients.find(fd) != clients.end())
+        return clients[fd];
+	
+    return NULL;
+}
+
 void Server::initSocket()
 {
 	serverFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverFd < 0)
-	{
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
+		throw NetworkException("Failed to ceate socket.");
 
 	int opt = 1;
 	if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-	{
-		perror("setsockopt");
-		exit(EXIT_FAILURE);
-	}
+		throw NetworkException("Failed to set socket options.");
+	
+	if (fcntl(serverFd, F_SETFL, O_NONBLOCK) == -1)
+		throw NetworkException("Fialed to set non-blocking mode.");
+	
 	// configure the network address for the server so it knows where and how to listen for incoming connections
 	sockaddr_in addr;
 
@@ -42,22 +50,11 @@ void Server::initSocket()
 	addr.sin_addr.s_addr = INADDR_ANY; //listen to every network connection available on the computer.
 	addr.sin_port = htons(port);
 
-	if (fcntl(serverFd, F_SETFL, O_NONBLOCK) == -1)
-	{
-		perror("file control");
-		exit(EXIT_FAILURE);
-	}
 	if (bind(serverFd, (sockaddr*)&addr, sizeof(addr)) < 0)
-	{
-		perror("bind");
-		exit(EXIT_FAILURE);
-	}
+		throw NetworkException("Failed to bind to port");
 
 	if (listen(serverFd, 10) < 0)
-	{
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
+		throw NetworkException("Failed to listen on socket.");
 	
 	// adding server fd to poll
 	pollfd pfd;
@@ -65,7 +62,7 @@ void Server::initSocket()
 	pfd.events = POLL_IN;
 	pfd.revents = 0;
 
-	fds.push_back(pfd);
+	pollFds.push_back(pfd);
 
 	std::cout << "Server linstening on port " << port << std::endl;
 }
@@ -74,18 +71,20 @@ void Server::startServer()
 {
 	while (!signalFlag)
 	{
-		int ret = poll(&fds[0], fds.size(), -1);
-		if (ret < 0)
+		int ret = poll(&pollFds[0], pollFds.size(), -1);
+		if (ret < 0 && !signalFlag)
 		{
-			perror("poll");
-			break;
-		}
+            std::cerr << "Fatal Error: poll() failed." << std::endl;
+            break;
+        }
+		else if (signalFlag)
+            break;
 
-		for (size_t i = 0; i < fds.size(); i++)
+		for (size_t i = 0; i < pollFds.size(); i++)
 		{
-			if (fds[i].revents & POLLIN)
+			if (pollFds[i].revents & POLLIN)
 			{
-				if (fds[i].fd == serverFd)
+				if (pollFds[i].fd == serverFd)
 					acceptNewClient();
 				else
 				{
@@ -114,7 +113,7 @@ void Server::acceptNewClient()
 	pfd.events = POLLIN;
 	pfd.revents = 0;
 
-	fds.push_back(pfd);
+	pollFds.push_back(pfd);
 
 	clients[clientFd] = new Client(clientFd);
 
@@ -191,7 +190,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
     for (size_t i = 0; i < cmd.length(); ++i)
         cmd[i] = toupper(cmd[i]);
 
-	Client* current_client = clients[client_fd];
+	// Client* current_client = clients[client_fd];
 	CommandType type = getCommandType(cmd);
     switch (type) {
         case CMD_PASS:
@@ -199,7 +198,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_USER:
         case CMD_QUIT:
         case CMD_PRIVMSG:
-            handleClientCommand(current_client, msg, this);
+            // handleClientCommand(current_client, msg, this);
             break;
 
         case CMD_JOIN:
@@ -208,7 +207,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_INVITE:
         case CMD_KICK:
         case CMD_MODE:
-            handleChannelCommand(current_client, msg, this);
+            // handleChannelCommand(current_client, msg, this);
             break;
 
         case CMD_UNKNOWN:
@@ -221,17 +220,17 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 
 void Server::handleClient(int index)
 {
-	int fd = fds[index].fd;
+	int fd = pollFds[index].fd;
 	Client* client = clients[fd];
 
 	char buffer[1024];
 	std::memset(buffer, 0, sizeof(buffer));
 
-	int bytes = recv(fds[index].fd, buffer, sizeof(buffer), 0);
+	int bytes = recv(pollFds[index].fd, buffer, sizeof(buffer), 0);
 
 	if (bytes <= 0)
 	{
-		std::cout << "Client disconnected FD = " << fds[index].fd << std::endl;
+		std::cout << "Client disconnected FD = " << pollFds[index].fd << std::endl;
 		disconnectClient(fd);
 		return;
 	}
@@ -267,11 +266,11 @@ void Server::disconnectClient(int fd)
 	delete clients[fd];
 	clients.erase(fd);
 
-    for (std::vector<struct pollfd>::iterator it = fds.begin(); it != fds.end(); ++it) 
+    for (std::vector<struct pollfd>::iterator it = pollFds.begin(); it != pollFds.end(); ++it) 
 	{
         if (it->fd == fd)
 		{
-            fds.erase(it);
+            pollFds.erase(it);
             break;
         }
     }
@@ -279,11 +278,20 @@ void Server::disconnectClient(int fd)
 
 void Server::cleanup()
 {
-	for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); it++)
-	{
-		close(it->first);
-		delete it->second;
-	}
-	if (serverFd != -1)
-		close(serverFd);
+	for (std::map<int, Client*>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        close(it->first);
+        delete it->second;
+    }
+    clients.clear(); // Wipe the map to remove dangling pointers
+
+    // 2. Close the main server socket
+    if (serverFd != -1) {
+        close(serverFd);
+        serverFd = -1; // Reset to prevent double-close
+    }
+
+    // Clear the poll array
+    pollFds.clear();
+    
+    std::cout << "Network: All resources successfully cleaned up." << std::endl;
 }

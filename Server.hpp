@@ -36,7 +36,7 @@ private:
 	int port;
 	int serverFd;
 	std::string password;
-	std::vector<pollfd> fds;
+	std::vector<pollfd> pollFds;
 	std::map<int, Client*> clients;
 	static bool signalFlag;
 
@@ -58,6 +58,12 @@ public:
 
 	void initSocket();
 	void startServer();
+
+	// getters 
+	int getServerFd();
+	std::map<int, Client*>& getClients();
+	Client* getClient(int fd);
+
 	static void handleSignal(int signum);
 	ParsedMessage parseMessage(const std::string& rawMessage);
 	CommandType getCommandType(const std::string& cmd);
