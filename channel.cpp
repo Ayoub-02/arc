@@ -3,7 +3,6 @@
 Channel::Channel(std::string name)
 {
     this->name = name;
-    
 };
 
 Channel::~Channel()
@@ -66,4 +65,28 @@ void    Channel::settopicrestricted(bool topic_restricted)
     this->topic_restricted = topic_restricted;
 };
 
-Channel::
+void Channel::removeMember(Client* client)
+{
+    for (std::vector<Client*>::iterator it = members.begin();
+         it != members.end(); ++it)
+    {
+        if (*it == client)
+        {
+            members.erase(it);
+            break;
+        }
+    }
+}
+
+void Channel::removeOperator(Client* client)
+{
+    for (std::vector<Client*>::iterator it = operators.begin();
+         it != operators.end(); ++it)
+    {
+        if (*it == client)
+        {
+            operators.erase(it);
+            break;
+        }
+    }
+}

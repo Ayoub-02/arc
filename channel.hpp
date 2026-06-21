@@ -48,6 +48,11 @@ class Channel
 
         //broadcast
         void    broadcast(std::string msg, Client *client);
+
+        //added by mehdi
+        void removeMember(Client* client);
+        void removeOperator(Client* client);
+
         
 
 };

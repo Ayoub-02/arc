@@ -1,5 +1,6 @@
 #include "CommandParser.hpp"
 
+
 void handlePass(Client& client, Command& cmd, Server& server)
 {
     if (client.getIsRegistered()) //is he already registred
@@ -12,7 +13,7 @@ void handlePass(Client& client, Command& cmd, Server& server)
         sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS PASS :Not enough parameters\r\n");
         return;
     }
-    if (cmd.params[0] != server.getPassword())  //pass incorrect
+    if (cmd.params[0] != server.getServerPassword())  //pass incorrect
     {
         sendToClient(client.getFd(), "464 ERR_PASSWDMISMATCH :Password incorrect\r\n");
         return;
@@ -33,7 +34,7 @@ void handleNick(Client& client, Command& cmd, Server& server)   //li mora : kayt
         sendToClient(client.getFd(), "432 ERR_ERRONEUSNICKNAME :Invalid nickname\r\n");
         return;
     }
-    if (server.IsNickTaken(cmd.params[0])) 
+    if (server.isNickTaken(cmd.params[0])) 
     {
         sendToClient(client.getFd(), "433 ERR_NICKNAMEINUSE :Nickname is already in use\r\n");
         return;
@@ -128,12 +129,16 @@ void handleQuit(Client& client, Command& cmd, Server& server)
         reason = cmd.trailingMessage;
     else if (!cmd.params.empty())
         reason = cmd.params[0];
-    else
-        reason = "Client Quit";
+    
+    // server.broadcastQuit(&client, reason); send message when dying to all members that exist in his joined channels
+    // server.removeMemberFromAllChannels(client);
+    server.disconnectClient(client.getFd());
 
     
-    close(client.getFd());
-    delete server.clients[client.getFd()];
+
+    
+    
+
 
 }
 

@@ -3,11 +3,11 @@
 #include <string>
 #include <vector>
 #include <sys/socket.h>
-#include "Client.hpp"
 #include "Server.hpp"
+#include "channel.hpp"
 
 
-class server;
+
 struct Command
 {
     std::string command_name ;
@@ -15,7 +15,6 @@ struct Command
     std::string trailingMessage;
 };
 
-void handleCommand(Client& client, Command& cmd, Server& server);
 void handleNick(Client& client, Command& cmd, Server& server);
 void handlePass(Client& client, Command& cmd, Server& server);
 void handleUser(Client& client, Command& cmd, Server& server);
