@@ -21,6 +21,7 @@ void Server::handleSignal(int signum)
 }
 
 int Server::getServerFd() { return serverFd; }
+std::string Server::getServerPassword() { return password; }
 std::map<int, Client*>& Server::getClients() { return clients; }
 Client* Server::getClient(int fd)
 {
@@ -258,11 +259,21 @@ void Server::handleClient(int index)
 	}
 }
 
+bool Server::isNickTaken(std::string nickname)
+{
+    for (std::map<int, Client*>::iterator it = clients.begin();it != clients.end();++it)
+    {
+        if (it->second->getNickname() == nickname)
+            return true;
+    }
+    return false;
+}
+
 void Server::disconnectClient(int fd)
 {
 	if (clients.find(fd) == clients.end())
 		return;
-	close(fd); // Review after
+	close(fd);
 	delete clients[fd];
 	clients.erase(fd);
 
