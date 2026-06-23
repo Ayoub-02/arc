@@ -107,11 +107,14 @@ void    handlePart(Client* client, std::vector<std::string> params, std::string 
 
     if (!channel->ismember(client))
     {
-        std::string msg = "442" + client->getNickname() + " " +  channelName + " :You're not on that channel\r\n";
+        std::string msg = "442 " + client->getNickname() + " " +  channelName + " :You're not on that channel\r\n";
         send(client->getFd() , msg.c_str() , msg.size() , 0);
         return ;
     }
-    std::string partMsg = ":" + client->getPrefix() + " PART " + channelName + "\r\n";
+    std::string partMsg = ":" + client->getPrefix() + " PART " + channelName;
+    if (!trailing.empty())
+        partMsg += " :" + trailing;
+    partMsg += "\r\n";
     send(client->getFd() , partMsg.c_str() , partMsg.size(), 0);
     channel->broadcast(":" + client->getPrefix() + " PART " + channelName, client);
 
@@ -141,7 +144,7 @@ void    handleTopic(Client *client, std::vector<std::string> params, std::string
     std::map<std::string, Channel*> &channels = server->getChannels();
     if (channels.find(channelName) == channels.end())
     {
-        std::string msg = "442 " + client->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        std::string msg = "403 " + client->getNickname() + " " + channelName + " :No such channel\r\n";
         send(client->getFd() , msg.c_str(), msg.size(), 0);
         return ;
     }
@@ -242,3 +245,65 @@ void    handleInvite(Client *client , std::vector<std::string> params, Server *s
 };
 
 
+void    handleKick(Client* client, std::vector<std::string> params, std::string trailing, Server* server)
+{
+    if (!client->getIsRegistered())
+    {
+        std::string msg = "451 " + client->getNickname() + " :You have not registered\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    if (params.size() < 2)
+    {
+        std::string msg = "461 " + client->getNickname() + " KICK :Not enough parameters\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    std::map<std::string, Channel*> &channels = server->getChannels();
+    std::string target = params[1];
+    std::string channelName = params[0];
+    if (channels.find(channelName) == channels.end())
+    {
+        std::string msg = "403 " + client->getNickname() + " " + channelName + " :No such channel\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }  
+    Channel *channel = channels[channelName];
+    if (!channel->ismember(client))
+    {
+        std::string msg = "442 " + client->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    if (!channel->isoperator(client))
+    {
+        std::string msg = "482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    Client *targetClient = server->getClientNickName(target);
+    if (!targetClient)
+    {
+        std::string msg = "401 " + client->getNickname() + " " + target + " :No such nick\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    if (!channel->ismember(targetClient))
+    {
+        std::string msg = "441 " + client->getNickname() + " " + target + " " + channelName + " :They aren't on that channel\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
+    std::string Kickmsg = ":" + client->getPrefix() + " KICK " + channelName + " " + target;
+    if (!trailing.empty())
+        Kickmsg += (" :" + trailing);
+    Kickmsg += "\r\n";
+    send(targetClient->getFd(), Kickmsg.c_str(), Kickmsg.size(), 0);
+    channel->broadcast(Kickmsg, targetClient);
+    channel->removememeber(targetClient);
+    if (channel->getmembers().empty())
+    {
+        channels.erase(channelName);
+        delete channel;
+    }
+};
