@@ -135,12 +135,14 @@ ParsedMessage Server::parseMessage(const std::string& rawMessage) {
         msg.command = str.substr(0, pos);
         str.erase(0, pos);
     }
-	else 
-	{
+	else
         msg.command = str;
-        return msg;
-    }
 
+	for (size_t i = 0; i < msg.command.length(); ++i)
+        msg.command[i] = toupper(msg.command[i]);
+
+	if (pos == std::string::npos)
+        return msg;
     while (!str.empty())
 	{
         start = str.find_first_not_of(' ');
@@ -187,12 +189,8 @@ CommandType Server::getCommandType(const std::string& cmd)
 
 void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 {
-	std::string cmd = msg.command;
-    for (size_t i = 0; i < cmd.length(); ++i)
-        cmd[i] = toupper(cmd[i]);
-
 	Client* current_client = clients[client_fd];
-	CommandType type = getCommandType(cmd);
+	CommandType type = getCommandType(msg.command);
     switch (type) {
         case CMD_PASS:
         case CMD_NICK:
@@ -228,7 +226,7 @@ void Server::handleClient(int index)
 	std::memset(buffer, 0, sizeof(buffer));
 
 	int bytes = recv(pollFds[index].fd, buffer, sizeof(buffer), 0);
-	
+
 	if (bytes <= 0)
 	{
 		std::cout << "Client disconnected FD = " << pollFds[index].fd << std::endl;

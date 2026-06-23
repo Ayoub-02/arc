@@ -70,6 +70,17 @@ public:
 	// getters 
 	int getServerFd();
 	std::map<int, Client*>& getClients();
+	Client* getClient(int fd);
+	std::string getServerPassword();
+
+	static void handleSignal(int signum);
+	ParsedMessage parseMessage(const std::string& rawMessage);
+	CommandType getCommandType(const std::string& cmd);
+	void routeCommand(int client_fd, const ParsedMessage& msg);
+	bool isNickTaken(std::string nickname);
+	void disconnectClient(int fd);
+	void cleanup();
+};
 	Client*	getClient(int fd);
 	std::string	getServerPassword();
 
