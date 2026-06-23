@@ -86,16 +86,13 @@ void handleUser(Client& client, const ParsedMessage& cmd)//USER <username> <host
 
 void handleQuit(Client& client, const ParsedMessage& cmd, Server& server)
 {
-    if (!client.getIsRegistered())
-    {
-        sendToClient(client.getFd(), "451 ERR_NOTREGISTERED :You have not registered\r\n");
-        return;
-    }
     std::string reason;
     if (!cmd.trailing.empty())
         reason = cmd.trailing;
     else if (!cmd.params.empty())
         reason = cmd.params[0];
+    else 
+        reason = "Without reason!";
     
     server.broadcastQuit(reason, client);
     server.removeMemberFromAllChannels(client);

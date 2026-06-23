@@ -208,8 +208,11 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_INVITE:
         case CMD_KICK:
         case CMD_MODE:
-            // handleChannelCommand(current_client, msg, this);
+        {
+            handleChannelCommand(*current_client, msg, *this);
+            // std::cout << "here : ---> " << channels[msg.params[0]]->isoperator(current_client) << std::endl;
             break;
+        }
 
         case CMD_UNKNOWN:
         default:

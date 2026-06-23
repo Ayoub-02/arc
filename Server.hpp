@@ -83,6 +83,7 @@ public:
 
 	std::map<std::string, Channel*>& getChannels(); //roundi
 	void	handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server); //ljadid dyal mehdi
+	void 	handleChannelCommand(Client& client, const ParsedMessage& cmd, Server& server);
 	void	removeMemberFromAllChannels(Client &client); //ljadid dyal mehdi
 	void	broadcastQuit(std::string reason, Client &client); //ljadid dyal mehdi
 	bool	clientExistence(std::string target); //ljadid dyal mehdi

@@ -5,6 +5,7 @@
 #include "Channel.hpp"
 
 class Server;
+class Channel;
 
 void    handleJoin(Client* client, std::vector<std::string> params, Server* server);
 void    handlePart(Client* client, std::vector<std::string> params,std::string trailing, Server* server);

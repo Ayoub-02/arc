@@ -58,10 +58,7 @@ bool onlySpaces(std::string trailingMessage)
 
 void Server::broadcastQuit(std::string reason, Client &client)
 {
-    std::string msg = ":" + client.getNickname()
-                    + " QUIT :"
-                    + reason
-                    + "\r\n";
+    std::string msg = ":" + client.getNickname() + " QUIT :" + reason;
 
     for (std::map<std::string, Channel*>::iterator it = channels.begin();
          it != channels.end(); ++it)

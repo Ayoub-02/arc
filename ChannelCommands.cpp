@@ -1,5 +1,19 @@
 #include "ChannelCommands.hpp"
 
+void Server::handleChannelCommand(Client& client, const ParsedMessage& cmd, Server& server)
+{
+    if (cmd.command == "JOIN")
+        handleJoin(&client, cmd.params, &server);
+    else if (cmd.command == "PART")
+        handlePart(&client, cmd.params, cmd.trailing, &server);
+    else if (cmd.command == "TOPIC")
+        handleTopic(&client, cmd.params, cmd.trailing, &server);
+    else if (cmd.command == "INVITE")
+        handleInvite(&client, cmd.params, &server);
+    // else if(cmd.command == "PRIVMSG")
+    //     handlePrivmsg(client, cmd, server);
+}
+
 void    handleJoin(Client* client, std::vector<std::string> params, Server* server)
 {
     //validate
@@ -52,6 +66,7 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
             return;
         }    
     }
+    // add check if aleready a member
     channel->addmember(client);
     if (!channelExist)
         channel->addoperator(client);
