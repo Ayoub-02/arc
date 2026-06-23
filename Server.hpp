@@ -39,8 +39,8 @@ public:
 
 	void initSocket();
 	void startServer();
-	std::map<std::string, Channel*>& getChannels();
+	std::map<std::string, Channel*>& getChannels();//added by reddipo
 	void	removeMemberFromAllChannels(Client &client);
-	Client *getClientNickName(std::string &nickName);
+	Client *getClientNickName(std::string &nickName);//added byreddipo
 
 };
