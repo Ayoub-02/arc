@@ -13,9 +13,9 @@ int main(int argc, char **argv)
 	try
 	{
 		signal(SIGINT, Server::handleSignal);
-    signal(SIGTERM, Server::handleSignal);
+    	signal(SIGTERM, Server::handleSignal);
 		signal(SIGQUIT, Server::handleSignal);
-    signal(SIGPIPE, SIG_IGN);
+    	signal(SIGPIPE, SIG_IGN);
 
 
 		std::cout << "Booting up the server ..." << std::endl;
