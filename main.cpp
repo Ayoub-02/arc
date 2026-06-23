@@ -14,6 +14,7 @@ int main(int argc, char **argv)
 	{
 		signal(SIGINT, Server::handleSignal);
     	signal(SIGTERM, Server::handleSignal);
+		signal(SIGQUIT, Server::handleSignal);
     	signal(SIGPIPE, SIG_IGN);
 
 
