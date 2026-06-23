@@ -19,6 +19,7 @@ class Channel
         bool    topic_restricted;
         std::vector<Client*> members;
         std::vector<Client*> operators;
+        std::vector<Client*> invited;
     public:
         Channel(std::string name);
         ~Channel();
@@ -49,6 +50,12 @@ class Channel
         void    addoperator(Client *client);
         void    removeoperator(Client *client);
         bool    isoperator(Client *client);
+
+
+        //INVITE MANAGEMENT
+        void    addInvite(Client *client);
+        void    removeInvite(Client *client);
+        bool    isInvited(Client *client);
 
         //broadcast
         void    broadcast(std::string msg, Client *sender);

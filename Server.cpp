@@ -174,5 +174,16 @@ void	Server::removeMemberFromAllChannels(Client &client)
 	}
 };
 
+Client *Server::getClientNickName(std::string &nickName)
+{
+	std::map<int, Client*>::iterator it = clients.begin();
+	while (it != clients.end())
+	{
+		if (it->second->getNickname() == nickName)
+			return (it->second);
+		it++;
+	}
+	return (NULL);
+};
 
 

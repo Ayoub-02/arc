@@ -160,3 +160,38 @@ void    Channel::broadcast(std::string msg, Client *sender)
         i++;
     }
 };
+
+
+void    Channel::addInvite(Client *client)
+{
+    if (!isInvited(client))
+    {
+        invited.push_back(client);
+    }
+};
+
+void        Channel::removeInvite(Client *client)
+{
+    std::vector<Client *>::iterator it = invited.begin();
+    while (it != invited.end())
+    {
+        if (*it == client)
+        {       
+            invited.erase(it);
+            return ;
+        }  
+        it++;
+    }
+};
+
+bool    Channel::isInvited(Client *client)
+{
+    std::vector<Client *>::iterator it = invited.begin();
+    while (it != invited.end())
+    {
+        if (*it == client)
+            return (true);
+        it++;
+    }
+    return (false);
+};

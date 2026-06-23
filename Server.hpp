@@ -41,4 +41,6 @@ public:
 	void startServer();
 	std::map<std::string, Channel*>& getChannels();
 	void	removeMemberFromAllChannels(Client &client);
+	Client *getClientNickName(std::string &nickName);
+
 };
