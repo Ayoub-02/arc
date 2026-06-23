@@ -215,11 +215,11 @@ void    handleInvite(Client *client , std::vector<std::string> params, Server *s
     Client *targetClient = server->getClientNickName(target);
     if (!targetClient)
     {
-        std::string msg = "401 " + client->getNickname() + " " + targetNick + " :No such nick/channel\r\n";
+        std::string msg = "401 " + client->getNickname() + " " + target + " :No such nick/channel\r\n";
         send(client->getFd(), msg.c_str(), msg.size(), 0);
         return;
     }
-    if (!channel->ismember(targetClient))
+    if (channel->ismember(targetClient))
     {
         std::string msg = "443 " + client->getNickname() + " " + target + " " + channelName + " :is already on channel\r\n";
         send(client->getFd(), msg.c_str(), msg.size(), 0);
@@ -240,3 +240,5 @@ void    handleInvite(Client *client , std::vector<std::string> params, Server *s
     std::string reply = "341 " + client->getNickname() + " " + target + " " + channelName + "\r\n";
     send(client->getFd(), reply.c_str(), reply.size(), 0);
 };
+
+
