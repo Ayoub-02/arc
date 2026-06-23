@@ -211,9 +211,11 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 
         case CMD_UNKNOWN:
         default:
+        {
             std::cout << "Network: Unhandled command '" << msg.command << "' received from FD " << client_fd << std::endl;
-            // Teammate will likely send back 421 ERR_UNKNOWNCOMMAND here
+            sendToClient(client_fd, "421 ERR_UNKNOWNCOMMAND :Unknown command\r\n");
             break;
+        }
     }	
 }
 

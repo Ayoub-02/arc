@@ -10,7 +10,7 @@ void Server::handleClientCommand(Client& client, const ParsedMessage& cmd, Serve
         handleUser(client, cmd);
     else if (cmd.command == "QUIT")
         handleQuit(client, cmd, server);
-    else if(cmd.params[0] == "PRIVMSG")
+    else if(cmd.command == "PRIVMSG")
         handlePrivmsg(client, cmd, server);
 }
 
