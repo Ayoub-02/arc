@@ -13,6 +13,13 @@
 #include <sstream>
 #include <csignal>
 #include "Client.hpp"
+#include "Channel.hpp"
+#include "UserCommands.hpp"
+#include "ChannelCommands.hpp"
+
+
+class Client;
+
 
 enum CommandType {
     CMD_PASS, CMD_NICK,
@@ -38,6 +45,7 @@ private:
 	std::string password;
 	std::vector<pollfd> pollFds;
 	std::map<int, Client*> clients;
+	std::map<std::string, Channel*> channels;//added by redippo
 	static bool signalFlag;
 
 	void acceptNewClient();
@@ -72,4 +80,25 @@ public:
 	bool isNickTaken(std::string nickname);
 	void disconnectClient(int fd);
 	void cleanup();
+};
+	Client*	getClient(int fd);
+	std::string	getServerPassword();
+
+	static void	handleSignal(int signum);
+	ParsedMessage	parseMessage(const std::string& rawMessage);
+	CommandType	getCommandType(const std::string& cmd);
+	void	routeCommand(int client_fd, const ParsedMessage& msg);
+	bool	isNickTaken(std::string nickname);  //ljadid dyal mehdi
+	void	disconnectClient(int fd);
+	void	cleanup();
+
+	std::map<std::string, Channel*>& getChannels(); //roundi
+	void	handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server); //ljadid dyal mehdi
+	void	removeMemberFromAllChannels(Client &client); //ljadid dyal mehdi
+	void	broadcastQuit(std::string reason, Client &client); //ljadid dyal mehdi
+	bool	clientExistence(std::string target); //ljadid dyal mehdi
+	bool	channelExistence(std::string target); ////ljadid dyal mehdi
+	void	transferMessage(std::string target, const std::string  message, Client &client);//ljadid dyal mehdi
+	Client *getClientNickName(std::string &nickName); // ljadid dyal roundi
+
 };

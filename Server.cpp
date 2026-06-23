@@ -189,7 +189,7 @@ CommandType Server::getCommandType(const std::string& cmd)
 
 void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 {
-	// Client* current_client = clients[client_fd];
+	Client* current_client = clients[client_fd];
 	CommandType type = getCommandType(msg.command);
     switch (type) {
         case CMD_PASS:
@@ -197,7 +197,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_USER:
         case CMD_QUIT:
         case CMD_PRIVMSG:
-            // handleClientCommand(current_client, msg, this);
+            handleClientCommand(*current_client, msg, *this);
             break;
 
         case CMD_JOIN:
@@ -244,14 +244,17 @@ void Server::handleClient(int index)
 		std::string message = buf.substr(0, pos);
 		buf.erase(0, pos + 2);
 
-		std::cout << "Full message: [" << message << "]" << std::endl;
+		// std::cout << "Full message: [" << message << "]" << std::endl;
 
 		// parse
 		ParsedMessage parsedMsg = parseMessage(message);
+		
 
 		//Debug (remove after)
-		std::cout << "CMD: " << parsedMsg.command << std::endl;
+		// std::cout << "CMD: " << parsedMsg.command << " Trailing: " << parsedMsg.trailing << std::endl;
 		routeCommand(fd, parsedMsg);
+		//Exexute
+
 	}
 }
 
@@ -302,3 +305,92 @@ void Server::cleanup()
     
     std::cout << "Network: All resources successfully cleaned up." << std::endl;
 }
+
+void    Server::removeMemberFromAllChannels(Client &client)
+{
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+    while (it != channels.end())
+    {
+        if (it->second->ismember(&client))
+        {
+            it->second->removememeber(&client);
+            if (it->second->getmembers().empty())
+            {
+                delete it->second;
+                std::map<std::string, Channel*>::iterator toErase = it;
+                it++;
+                channels.erase(toErase);
+                continue;
+            }
+        }    
+        it++;
+    }
+}
+
+bool   Server::clientExistence(std::string target)
+{
+    if (target.empty() || target[0] == '#')
+        return false;
+
+    for (std::map<int, Client*>::iterator it = clients.begin();
+            it != clients.end(); ++it)
+    {
+        Client* c = it->second;
+        if (c->getNickname() == target)
+            return true;
+    }
+    return false;
+}
+
+bool Server::channelExistence(std::string target)
+{
+    if (target.empty() || target[0] != '#')
+        return false;
+
+    return channels.find(target) != channels.end();
+}
+
+std::map<std::string, Channel*>& Server::getChannels()
+{
+	return (channels);
+};
+
+void	Server::transferMessage(std::string target, const std::string  message, Client &client)
+{
+    if (target[0] != '#')
+    {
+        for (std::map<int, Client*>::iterator it = clients.begin();
+                it != clients.end(); ++it)
+        {
+            Client* c = it->second;
+            if (c->getNickname() == target)
+            {
+                sendToClient(c->getFd(), message);
+                return;
+            }
+        }
+    }
+    else
+    {
+        std::map<std::string, Channel*>& channels = getChannels();
+        std::map<std::string, Channel*>::iterator it = channels.find(target);
+        if (it != channels.end())
+        {
+            Channel* channel = it->second;
+            channel->broadcast(message, &client);
+        }
+    }
+}
+
+Client *Server::getClientNickName(std::string &nickName)
+{
+	std::map<int, Client*>::iterator it = clients.begin();
+	while (it != clients.end())
+	{
+		if (it->second->getNickname() == nickName)
+			return (it->second);
+		it++;
+	}
+	return (NULL);
+}
+
