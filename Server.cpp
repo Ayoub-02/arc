@@ -197,8 +197,10 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_USER:
         case CMD_QUIT:
         case CMD_PRIVMSG:
+        {
             handleClientCommand(*current_client, msg, *this);
             break;
+        }
 
         case CMD_JOIN:
         case CMD_PART:

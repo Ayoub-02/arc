@@ -23,6 +23,11 @@ void handlePass(Client& client, const ParsedMessage& cmd, Server& server)
 
 void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li mora : kayt igonara this is valid -> NICK mehdi :mehdi : hufdsj
 {
+    if (!client.getIsAuthenticated())
+    {
+        sendToClient(client.getFd(), "451 ERR_NOTREGISTERED :You have not registered\r\n");
+        return;
+    }
     if (cmd.params.size() != 1) 
     {
         sendToClient(client.getFd(), "431 ERR_NONICKNAMEGIVEN :No nickname given\r\n");
@@ -39,6 +44,8 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li
         return;
     }
     client.setNickname(cmd.params[0]);
+    if (!client.getNickname().empty() && !client.getUsername().empty())
+        client.setIsRegistered(true);
 }
 
 void handleUser(Client& client, const ParsedMessage& cmd)//USER <username> <hostname> <servername> :<realname>
@@ -73,16 +80,17 @@ void handleUser(Client& client, const ParsedMessage& cmd)//USER <username> <host
     client.setServername(cmd.params[2]);
     client.setRealname(cmd.trailing);
 
-    if (client.getIsAuthenticated()
-        && !client.getNickname().empty()
-        && !client.getUsername().empty())
-    {
+    if (!client.getNickname().empty() && !client.getUsername().empty())
         client.setIsRegistered(true);
-    }
 }
 
 void handleQuit(Client& client, const ParsedMessage& cmd, Server& server)
 {
+    if (!client.getIsRegistered())
+    {
+        sendToClient(client.getFd(), "451 ERR_NOTREGISTERED :You have not registered\r\n");
+        return;
+    }
     std::string reason;
     if (!cmd.trailing.empty())
         reason = cmd.trailing;
@@ -98,6 +106,11 @@ void handleQuit(Client& client, const ParsedMessage& cmd, Server& server)
 
 void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server) // PRIVMSG <target> :<message>
 {
+    if (!client.getIsRegistered())
+    {
+        sendToClient(client.getFd(), "451 ERR_NOTREGISTERED :You have not registered\r\n");
+        return;
+    }
     if (cmd.params.empty() || cmd.params[0].empty())  //PRIVMSG :hi   the reciepent missing but message exist 
     {
         sendToClient(client.getFd(), "411 ERR_NORECIPIENT :No recipient given\r\n");
