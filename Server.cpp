@@ -105,7 +105,7 @@ void Server::acceptNewClient()
 	int clientFd = accept(serverFd, (sockaddr*)&clientAddr, &len);
 	if (clientFd < 0)
 	{
-		perror("accept");
+		std::cerr << "Warning: Failed to accept a new connection." << std::endl;
 		return;
 	}
 
@@ -211,7 +211,7 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 
         case CMD_UNKNOWN:
         default:
-            std::cout << "Network: Unhandled command '" << cmd << "' received from FD " << client_fd << std::endl;
+            std::cout << "Network: Unhandled command '" << msg.command << "' received from FD " << client_fd << std::endl;
             // Teammate will likely send back 421 ERR_UNKNOWNCOMMAND here
             break;
     }	

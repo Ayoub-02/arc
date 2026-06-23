@@ -77,20 +77,9 @@ public:
 	ParsedMessage parseMessage(const std::string& rawMessage);
 	CommandType getCommandType(const std::string& cmd);
 	void routeCommand(int client_fd, const ParsedMessage& msg);
-	bool isNickTaken(std::string nickname);
 	void disconnectClient(int fd);
 	void cleanup();
-};
-	Client*	getClient(int fd);
-	std::string	getServerPassword();
-
-	static void	handleSignal(int signum);
-	ParsedMessage	parseMessage(const std::string& rawMessage);
-	CommandType	getCommandType(const std::string& cmd);
-	void	routeCommand(int client_fd, const ParsedMessage& msg);
-	bool	isNickTaken(std::string nickname);  //ljadid dyal mehdi
-	void	disconnectClient(int fd);
-	void	cleanup();
+	bool	isNickTaken(std::string nickname);
 
 	std::map<std::string, Channel*>& getChannels(); //roundi
 	void	handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server); //ljadid dyal mehdi
