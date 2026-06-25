@@ -83,7 +83,7 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     size_t i = 0;
     while (i < members.size())
     {
-        names += members[i]->getNickname();
+        names += members[i]->getNickname() + " ";
         i++;
     }
     names+="\r\n";
