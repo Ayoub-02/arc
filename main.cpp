@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 		std::cout << "Booting up the server ..." << std::endl;
 		server.initSocket();
 
-		std::cout << "Init complete, multiplexing time ...." << std::endl;
+		std::cout << "Init complete, multiplexing time ....\n" << std::endl;
 	
 		server.startServer();
 	}

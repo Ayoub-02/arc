@@ -210,7 +210,6 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_MODE:
         {
             handleChannelCommand(*current_client, msg, *this);
-            // std::cout << "here : ---> " << channels[msg.params[0]]->isoperator(current_client) << std::endl;
             break;
         }
 
@@ -236,7 +235,6 @@ void Server::handleClient(int index)
 
 	if (bytes <= 0)
 	{
-		std::cout << "Client disconnected FD = " << pollFds[index].fd << std::endl;
 		disconnectClient(fd);
 		return;
 	}
@@ -251,17 +249,9 @@ void Server::handleClient(int index)
 		std::string message = buf.substr(0, pos);
 		buf.erase(0, pos + 2);
 
-		// std::cout << "Full message: [" << message << "]" << std::endl;
-
-		// parse
 		ParsedMessage parsedMsg = parseMessage(message);
-		
 
-		//Debug (remove after)
-		// std::cout << "CMD: " << parsedMsg.command << " Trailing: " << parsedMsg.trailing << std::endl;
 		routeCommand(fd, parsedMsg);
-		//Exexute
-
 	}
 }
 
@@ -291,6 +281,7 @@ void Server::disconnectClient(int fd)
             break;
         }
     }
+    std::cout << "Client disconnected FD = " << fd << std::endl;
 }
 
 void Server::cleanup()

@@ -43,9 +43,20 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li
         sendToClient(client.getFd(), "433 ERR_NICKNAMEINUSE :Nickname is already in use\r\n");
         return;
     }
+    std::string oldNick = client.getNickname();
     client.setNickname(cmd.params[0]);
     if (!client.getNickname().empty() && !client.getUsername().empty())
         client.setIsRegistered(true);
+
+    // broadcast to his channels
+    std::string msg = oldNick + " changed his nickname to :" + client.getNickname();
+    for (std::map<std::string, Channel*>::iterator it = server.getChannels().begin();
+         it != server.getChannels().end(); ++it)
+    {
+        Channel* ch = it->second;
+        if (ch->ismember(&client))
+            ch->broadcast(msg, &client);
+    }
 }
 
 void handleUser(Client& client, const ParsedMessage& cmd)//USER <username> <hostname> <servername> :<realname>
