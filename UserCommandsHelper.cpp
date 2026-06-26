@@ -1,6 +1,6 @@
 #include "UserCommands.hpp"
 
-void Server::handleClientCommand(Client& client, const ParsedMessage& cmd) //removed server from parameter 
+void Server::handleClientCommand(Client& client, const ParsedMessage& cmd) 
 {
     if (cmd.command == "PASS")
         handlePass(client, cmd, *this);
@@ -12,20 +12,20 @@ void Server::handleClientCommand(Client& client, const ParsedMessage& cmd) //rem
         handleQuit(client, cmd, *this);
     else if(cmd.command == "PRIVMSG")
         handlePrivmsg(client, cmd, *this);
-    else if (cmd.command == "PING")                        //bingoooooo added ping 
+    else if (cmd.command == "PING")        
         handlePing(client, cmd);
 }
 
 
 bool isValidParam(const std::string& param)
 {
-    if (param.empty())// not empty
+    if (param.empty())
         return false;
 
-    if (param.size() > 9)//max 9 letters
+    if (param.size() > 9)
         return false;
 
-    for (size_t i = 0; i < param.size(); i++) // doesnt containt special char
+    for (size_t i = 0; i < param.size(); i++) 
 	{
 		if(!std::isalnum(static_cast<unsigned char>(param[i])) &&
 			param[i] != '-' && param[i] != '_' &&

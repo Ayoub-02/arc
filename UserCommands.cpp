@@ -2,26 +2,26 @@
 
 void handlePass(Client& client, const ParsedMessage& cmd, Server& server)
 {
-    if (client.getIsRegistered()) //is he already registred
+    if (client.getIsRegistered())
     {
         sendToClient(client.getFd(), "462 ERR_ALREADYREGISTRED :You may not reregister\r\n");
         return;
     }
-    if (cmd.params.size() != 1) // he wrote only pass
+    if (cmd.params.size() != 1)
     {
         sendToClient(client.getFd(), "461 ERR_NEEDMOREPARAMS PASS :Not enough parameters\r\n");
         return;
     }
-    if (cmd.params[0] != server.getServerPassword())  //pass incorrect
+    if (cmd.params[0] != server.getServerPassword())
     {
         sendToClient(client.getFd(), "464 ERR_PASSWDMISMATCH :Password incorrect\r\n");
         return;
     }
 
-    client.setIsAuthenticated(true); // ya3ni password s7i7 but no registration yet
+    client.setIsAuthenticated(true);
 }
 
-void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li mora : kayt igonara this is valid -> NICK mehdi :mehdi : hufdsj
+void handleNick(Client& client, const ParsedMessage& cmd, Server& server)
 {
     if (!client.getIsAuthenticated())
     {
@@ -47,7 +47,6 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)   //li
     if (!client.getNickname().empty() && !client.getUsername().empty())
         client.setIsRegistered(true);
 
-    // broadcast to his channels
     std::string oldNick = client.getNickname();
 
     std::string msg = oldNick + " changed his nickname to :" + client.getNickname();
@@ -111,14 +110,14 @@ void handleQuit(Client& client, const ParsedMessage& cmd, Server& server)
     server.disconnectClient(client.getFd());
 }
 
-void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server) // PRIVMSG <target> :<message>
+void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server)
 {
     if (!client.getIsRegistered())
     {
         sendToClient(client.getFd(), "451 ERR_NOTREGISTERED :You have not registered\r\n");
         return;
     }
-    if (cmd.params.empty() || cmd.params[0].empty())  //PRIVMSG :hi   the reciepent missing but message exist 
+    if (cmd.params.empty() || cmd.params[0].empty())
     {
         sendToClient(client.getFd(), "411 ERR_NORECIPIENT :No recipient given\r\n");
         return;
@@ -128,7 +127,6 @@ void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server) // 
         sendToClient(client.getFd(), "412 ERR_NOTEXTTOSEND :No text to send\r\n");
         return;
     }
-
     std::string target = cmd.params[0];
     const std::string  message = ":" + client.getPrefix() + " PRIVMSG " + target + " :" + cmd.trailing;
 
@@ -152,7 +150,7 @@ void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server) // 
     }
 }
 
-void handlePing(Client& client, const ParsedMessage& cmd)      // hahiya ping
+void handlePing(Client& client, const ParsedMessage& cmd)   
 {
     if ((cmd.params.empty() || cmd.params[0].empty()) && cmd.trailing.empty())
     {

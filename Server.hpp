@@ -46,7 +46,7 @@ private:
 	std::string password;
 	std::vector<pollfd> pollFds;
 	std::map<int, Client*> clients;
-	std::map<std::string, Channel*> channels;//added by redippo
+	std::map<std::string, Channel*> channels;
 	static bool signalFlag;
 
 	void acceptNewClient();
@@ -67,8 +67,7 @@ public:
 
 	void initSocket();
 	void startServer();
-
-	// getters 
+ 
 	int getServerFd();
 	std::map<int, Client*>& getClients();
 	Client* getClient(int fd);
@@ -82,14 +81,14 @@ public:
 	void cleanup();
 	bool	isNickTaken(std::string nickname);
 
-	std::map<std::string, Channel*>& getChannels(); //roundi
-	void	handleClientCommand(Client& client, const ParsedMessage& cmd); //ljadid dyal mehdi
+	std::map<std::string, Channel*>& getChannels(); 
+	void	handleClientCommand(Client& client, const ParsedMessage& cmd); 
 	void 	handleChannelCommand(Client& client, const ParsedMessage& cmd, Server& server);
-	void	removeMemberFromAllChannels(Client &client); //ljadid dyal mehdi
-	void	broadcastQuit(std::string reason, Client &client); //ljadid dyal mehdi
-	bool	clientExistence(std::string target); //ljadid dyal mehdi
-	bool	channelExistence(std::string target); ////ljadid dyal mehdi
-	void	transferMessage(std::string target, const std::string  message, Client &client);//ljadid dyal mehdi
-	Client *getClientNickName(std::string &nickName); // ljadid dyal roundi
+	void	removeMemberFromAllChannels(Client &client); 
+	void	broadcastQuit(std::string reason, Client &client); 
+	bool	clientExistence(std::string target); 
+	bool	channelExistence(std::string target); 
+	void	transferMessage(std::string target, const std::string  message, Client &client);
+	Client *getClientNickName(std::string &nickName);
 
 };

@@ -113,7 +113,6 @@ void Client::appendBuffer(std::string data)
     buffer += data;
 }
 
-// Remove first n characters from buffer (after processing a command)
 void Client::eraseBuffer(size_t n)
 {
     if (n >= buffer.size())

@@ -10,8 +10,7 @@ void Server::handleChannelCommand(Client& client, const ParsedMessage& cmd, Serv
         handleTopic(&client, cmd.params, cmd.trailing, &server);
     else if (cmd.command == "INVITE")
         handleInvite(&client, cmd.params, &server);
-    // else if(cmd.command == "PRIVMSG")
-    //     handlePrivmsg(client, cmd, server);
+
 }
 
 void    handleJoin(Client* client, std::vector<std::string> params, Server* server)
@@ -40,9 +39,6 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     }
     std::map<std::string, Channel*>& channels = server->getChannels();
     bool channelExist = (channels.find(channelName) != channels.end());
-    
-    //start executing with some checks
-    
     Channel *channel;
     if (!channelExist)
     {
@@ -66,7 +62,6 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
             return;
         }    
     }
-    // add check if aleready a member
     channel->addmember(client);
     if (!channelExist)
         channel->addoperator(client);
@@ -117,7 +112,6 @@ void    handlePart(Client* client, std::vector<std::string> params, std::string 
         return ;
     }
     Channel *channel = channels[channelName];
-
     if (!channel->ismember(client))
     {
         std::string msg = "442" + client->getNickname() + " " +  channelName + " :You're not on that channel\r\n";
@@ -168,7 +162,6 @@ void    handleTopic(Client *client, std::vector<std::string> params, std::string
         send(client->getFd() , msg.c_str(), msg.size(), 0);
         return ;
     }
-    //VIEW TOPIC CASE
     if (trailing.empty())
     {
         if (channel->gettopic().empty())
@@ -183,8 +176,6 @@ void    handleTopic(Client *client, std::vector<std::string> params, std::string
         }
         return ;
     }
-
-    // SET TOPIC
     if (channel->istopicrestricted() && !channel->isoperator(client))
     {
         std::string msg = "482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
@@ -212,7 +203,7 @@ void    handleInvite(Client *client , std::vector<std::string> params, Server *s
         send(client->getFd(), msg.c_str(), msg.size(), 0);
         return;
     }
-    std::string target = params[0];// nickname of the invited
+    std::string target = params[0];
     std::string channelName = params[1];
     std::map<std::string, Channel*> &channels = server->getChannels();
     if (channels.find(channelName) == channels.end())
@@ -248,11 +239,8 @@ void    handleInvite(Client *client , std::vector<std::string> params, Server *s
         return;
     }
     channel->addInvite(targetClient);
-    //send a notice to the invited
     std::string inviteNotice = ":" + client->getPrefix() + " INVITE " + target + " :" + channelName + "\r\n";
     send(targetClient->getFd(), inviteNotice.c_str(), inviteNotice.size(), 0);
-    
-    //send a notice for the inviter
     std::string reply = "341 " + client->getNickname() + " " + target + " " + channelName + "\r\n";
     send(client->getFd(), reply.c_str(), reply.size(), 0);
 };

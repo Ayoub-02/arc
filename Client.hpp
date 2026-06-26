@@ -27,7 +27,7 @@ public:
     std::string getNickname();
     std::string getHostname();
     std::string getRealname();
-    std::string getServername();   //added by mehdi 
+    std::string getServername();   
     bool getIsAuthenticated();
     bool getIsRegistered();
     std::string getBuffer();
@@ -39,18 +39,14 @@ public:
     void setNickname(const std::string& nickname);
     void setHostname(const std::string& hostname);
     void setRealname(const std::string& realname);
-    void setServername(const std::string& realname);  //added by mehdi
+    void setServername(const std::string& realname);
     void setIsAuthenticated(bool value);
     void setIsRegistered(bool value);
     void setBuffer(std::string buffer)
     {
         this->buffer = buffer;
     }
-
-    // BUFFER
     void appendBuffer(std::string data);
     void eraseBuffer(size_t n);
-
-    // UTILITY
     std::string getPrefix() const;
 };

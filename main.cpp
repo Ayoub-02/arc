@@ -31,7 +31,6 @@ int main(int argc, char **argv)
 		server.cleanup();
         return 1;
 	}
-
 	std::cout << "\nSignal received. Shutting down gracefully..." << std::endl;
     server.cleanup();
 	std::cout << "The Server Closed!" << std::endl;
