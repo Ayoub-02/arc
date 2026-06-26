@@ -8,15 +8,31 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	int port = std::atoi(argv[1]);
-	Server server(port, argv[2]);
+	Server server(atoi(argv[1]), argv[2]);
 	
-	std::cout << "Booting up the server ..." << std::endl;
-	server.initSocket();
-	server.startServer();
+	try
+	{
+		signal(SIGINT, Server::handleSignal);
+    	signal(SIGTERM, Server::handleSignal);
+		signal(SIGQUIT, Server::handleSignal);
+    	signal(SIGPIPE, SIG_IGN);
 
-	std::cout << "inti complete, multiplexing time ....";
 
+		std::cout << "Booting up the server ..." << std::endl;
+		server.initSocket();
+
+		std::cout << "Init complete, multiplexing time ...." << std::endl;
 	
+		server.startServer();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << "Server Fatal Error: " << e.what() << std::endl;
+		server.cleanup();
+        return 1;
+	}
 
+	std::cout << "\nSignal received. Shutting down gracefully..." << std::endl;
+    server.cleanup();
+	std::cout << "The Server Closed!" << std::endl;
 }

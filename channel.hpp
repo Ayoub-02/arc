@@ -1,12 +1,13 @@
 #pragma once
 
-
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sys/socket.h>
 #include "Client.hpp"
 
+
+class Client;
 
 class Channel
 {

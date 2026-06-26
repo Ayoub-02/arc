@@ -2,8 +2,8 @@
 
 Client::Client(int fd) : fd(fd)
 {
-    nickname = "";
-    username = "";
+    nickName = "";
+    userName = "";
     hostname = "";
     realname = "";
     isAuthenticated = false;
@@ -23,12 +23,12 @@ int Client::getFd()
 
 std::string Client::getUsername()
 {
-    return (username);
+    return (userName);
 };
 
 std::string Client::getNickname()
 {
-    return (nickname);
+    return (nickName);
 };
 
 std::string Client::getHostname()
@@ -41,6 +41,10 @@ std::string Client::getRealname()
     return (realname);
 };
 
+std::string Client::getServername()
+{
+    return (servername);
+}
 
 bool  Client::getIsAuthenticated()
 {
@@ -67,27 +71,31 @@ void Client::setFd(int fd)
     this->fd = fd;
 };
 
-
-void Client::setUsername(std::string& username)
+void Client::setUsername(const std::string& username)
 {
-    this->username = username;
+    this->userName = username;
 };
 
-void    Client::setNickname(std::string& nickname)
+void    Client::setNickname(const std::string& nickname)
 {
-    this->nickname = nickname;
+    this->nickName = nickname;
 };
 
-void     Client::setHostname(std::string& hostname)
+void     Client::setHostname(const std::string& hostname)
 {
     this->hostname = hostname;
 };
 
 
-void     Client::setRealname(std::string& realname)
+void     Client::setRealname(const std::string& realname)
 {
     this->realname = realname;
 };
+
+void Client::setServername(const std::string& servername)
+{
+    this->servername = servername;
+}
 
 
 void Client::setIsAuthenticated(bool value)
@@ -103,7 +111,7 @@ void    Client::setIsRegistered(bool value)
 void Client::appendBuffer(std::string data)
 {
     buffer += data;
-};
+}
 
 // Remove first n characters from buffer (after processing a command)
 void Client::eraseBuffer(size_t n)
@@ -112,9 +120,9 @@ void Client::eraseBuffer(size_t n)
         buffer.clear();
     else
         buffer.erase(0, n);
-};
+}
 
 std::string Client::getPrefix() const
 {
-    return nickname + "!" + username + "@" + hostname;
-};
+    return nickName + "!" + userName + "@" + hostname;
+}

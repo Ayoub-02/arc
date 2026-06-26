@@ -1,5 +1,4 @@
-#include "channel.hpp"
-#include "Client.hpp"
+#include "Channel.hpp"
 
 Channel::Channel(std::string name)
 {
