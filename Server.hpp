@@ -83,7 +83,7 @@ public:
 
 	std::map<std::string, Channel*>& getChannels(); 
 	void	handleClientCommand(Client& client, const ParsedMessage& cmd); 
-	void 	handleChannelCommand(Client& client, const ParsedMessage& cmd, Server& server);
+	void 	handleChannelCommand(Client& client, const ParsedMessage& cmd);
 	void	removeMemberFromAllChannels(Client &client); 
 	void	broadcastQuit(std::string reason, Client &client); 
 	bool	clientExistence(std::string target); 
