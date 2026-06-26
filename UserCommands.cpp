@@ -43,8 +43,9 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)
         sendToClient(client.getFd(), "433 ERR_NICKNAMEINUSE :Nickname is already in use\r\n");
         return;
     }
-    client.setNickname(cmd.params[0]);
+    
     std::string oldNick = client.getNickname();
+    client.setNickname(cmd.params[0]);
     if (!client.getNickname().empty() && !client.getUsername().empty())
         client.setIsRegistered(true);
 
