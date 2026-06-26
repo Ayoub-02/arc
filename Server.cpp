@@ -174,7 +174,7 @@ ParsedMessage Server::parseMessage(const std::string& rawMessage) {
 CommandType Server::getCommandType(const std::string& cmd)
 {
     if (cmd == "PASS") return CMD_PASS;
-    if (cmd == "NICK") return CMD_NICK;   // "4444" passed while it shouldnt
+    if (cmd == "NICK") return CMD_NICK;
     if (cmd == "USER") return CMD_USER;
     if (cmd == "QUIT") return CMD_QUIT;
     if (cmd == "JOIN") return CMD_JOIN;
@@ -292,15 +292,13 @@ void Server::cleanup()
         close(it->first);
         delete it->second;
     }
-    clients.clear(); // Wipe the map to remove dangling pointers
+    clients.clear();
 
-    // 2. Close the main server socket
     if (serverFd != -1) {
         close(serverFd);
-        serverFd = -1; // Reset to prevent double-close
+        serverFd = -1;
     }
 
-    // Clear the poll array
     pollFds.clear();
     
     std::cout << "Network: All resources successfully cleaned up." << std::endl;

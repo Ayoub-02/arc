@@ -60,7 +60,7 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)
     }
 }
 
-void handleUser(Client& client, const ParsedMessage& cmd)//USER <username> <hostname> <servername> :<realname>
+void handleUser(Client& client, const ParsedMessage& cmd)
 {
     if (!client.getIsAuthenticated())
     {
