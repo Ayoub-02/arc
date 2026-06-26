@@ -1,18 +1,19 @@
-#include "CommandParser.hpp"
-#include "Server.hpp"
+#include "UserCommands.hpp"
 
-void Server::handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server)
+void Server::handleClientCommand(Client& client, const ParsedMessage& cmd) //removed server from parameter 
 {
     if (cmd.command == "PASS")
-        handlePass(client, cmd, server);
+        handlePass(client, cmd, *this);
     else if (cmd.command == "NICK")
-        handleNick(client, cmd, server);
+        handleNick(client, cmd, *this);
     else if (cmd.command == "USER")
-        handleUser(client, cmd, server);
+        handleUser(client, cmd);
     else if (cmd.command == "QUIT")
-        handleQuit(client, cmd, server);
-    // else if(cmd.params[0] == "PRIVMSG")
-        // handlePrivmsg(client, cmd, server);
+        handleQuit(client, cmd, *this);
+    else if(cmd.command == "PRIVMSG")
+        handlePrivmsg(client, cmd, *this);
+    else if (cmd.command == "PING")                        //bingoooooo added ping 
+        handlePing(client, cmd);
 }
 
 
@@ -57,3 +58,16 @@ bool onlySpaces(std::string trailingMessage)
     return (onlySpaces);
 }
 
+void Server::broadcastQuit(std::string reason, Client &client)
+{
+    std::string msg = ":" + client.getNickname() + " QUIT :" + reason;
+
+    for (std::map<std::string, Channel*>::iterator it = channels.begin();
+         it != channels.end(); ++it)
+    {
+        Channel* ch = it->second;
+
+        if (ch->ismember(&client))
+            ch->broadcast(msg, &client);
+    }
+}

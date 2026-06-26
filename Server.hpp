@@ -1,4 +1,4 @@
- #pragma once 
+#pragma once 
 
 #include <iostream>
 #include <cstring>
@@ -13,10 +13,13 @@
 #include <sstream>
 #include <csignal>
 #include "Client.hpp"
-#include "CommandParser.hpp"
+#include "Channel.hpp"
+#include "UserCommands.hpp"
+#include "ChannelCommands.hpp"
 
 
 class Client;
+
 
 enum CommandType {
     CMD_PASS, CMD_NICK,
@@ -24,7 +27,8 @@ enum CommandType {
     CMD_JOIN, CMD_PART, 
 	CMD_TOPIC, CMD_INVITE,
 	CMD_KICK, CMD_MODE,
-    CMD_PRIVMSG, CMD_UNKNOWN
+    CMD_PRIVMSG,CMD_PING,
+	CMD_UNKNOWN
 };
 
 struct ParsedMessage
@@ -42,6 +46,7 @@ private:
 	std::string password;
 	std::vector<pollfd> pollFds;
 	std::map<int, Client*> clients;
+	std::map<std::string, Channel*> channels;//added by redippo
 	static bool signalFlag;
 
 	void acceptNewClient();
@@ -73,8 +78,18 @@ public:
 	ParsedMessage parseMessage(const std::string& rawMessage);
 	CommandType getCommandType(const std::string& cmd);
 	void routeCommand(int client_fd, const ParsedMessage& msg);
-	bool isNickTaken(std::string nickname);
 	void disconnectClient(int fd);
 	void cleanup();
-	void handleClientCommand(Client& client, const ParsedMessage& cmd, Server& server);
+	bool	isNickTaken(std::string nickname);
+
+	std::map<std::string, Channel*>& getChannels(); //roundi
+	void	handleClientCommand(Client& client, const ParsedMessage& cmd); //ljadid dyal mehdi
+	void 	handleChannelCommand(Client& client, const ParsedMessage& cmd, Server& server);
+	void	removeMemberFromAllChannels(Client &client); //ljadid dyal mehdi
+	void	broadcastQuit(std::string reason, Client &client); //ljadid dyal mehdi
+	bool	clientExistence(std::string target); //ljadid dyal mehdi
+	bool	channelExistence(std::string target); ////ljadid dyal mehdi
+	void	transferMessage(std::string target, const std::string  message, Client &client);//ljadid dyal mehdi
+	Client *getClientNickName(std::string &nickName); // ljadid dyal roundi
+
 };

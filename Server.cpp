@@ -105,7 +105,7 @@ void Server::acceptNewClient()
 	int clientFd = accept(serverFd, (sockaddr*)&clientAddr, &len);
 	if (clientFd < 0)
 	{
-		perror("accept");
+		std::cerr << "Warning: Failed to accept a new connection." << std::endl;
 		return;
 	}
 
@@ -135,12 +135,14 @@ ParsedMessage Server::parseMessage(const std::string& rawMessage) {
         msg.command = str.substr(0, pos);
         str.erase(0, pos);
     }
-	else 
-	{
+	else
         msg.command = str;
-        return msg;
-    }
 
+	for (size_t i = 0; i < msg.command.length(); ++i)
+        msg.command[i] = toupper(msg.command[i]);
+
+	if (pos == std::string::npos)
+        return msg;
     while (!str.empty())
 	{
         start = str.find_first_not_of(' ');
@@ -182,25 +184,25 @@ CommandType Server::getCommandType(const std::string& cmd)
     if (cmd == "KICK") return CMD_KICK;
     if (cmd == "MODE") return CMD_MODE;
     if (cmd == "PRIVMSG") return CMD_PRIVMSG;
+    if (cmd == "PING") return CMD_PING;
     return CMD_UNKNOWN;
 }
 
 void Server::routeCommand(int client_fd, const ParsedMessage& msg)
 {
-	std::string cmd = msg.command;
-    for (size_t i = 0; i < cmd.length(); ++i)
-        cmd[i] = toupper(cmd[i]);
-
 	Client* current_client = clients[client_fd];
-	CommandType type = getCommandType(cmd);
+	CommandType type = getCommandType(msg.command);
     switch (type) {
         case CMD_PASS:
         case CMD_NICK:
         case CMD_USER:
         case CMD_QUIT:
         case CMD_PRIVMSG:
-            handleClientCommand(*current_client, msg, *this);
+        case CMD_PING:
+        {
+            handleClientCommand(*current_client, msg);
             break;
+        }
 
         case CMD_JOIN:
         case CMD_PART:
@@ -208,14 +210,18 @@ void Server::routeCommand(int client_fd, const ParsedMessage& msg)
         case CMD_INVITE:
         case CMD_KICK:
         case CMD_MODE:
-            // handleChannelCommand(current_client, msg, this);
+        {
+            handleChannelCommand(*current_client, msg, *this);
             break;
+        }
 
         case CMD_UNKNOWN:
         default:
-            std::cout << "Network: Unhandled command '" << cmd << "' received from FD " << client_fd << std::endl;
-            // Teammate will likely send back 421 ERR_UNKNOWNCOMMAND here
+        {
+            std::cout << "Network: Unhandled command '" << msg.command << "' received from FD " << client_fd << std::endl;
+            sendToClient(client_fd, "421 ERR_UNKNOWNCOMMAND :Unknown command\r\n");
             break;
+        }
     }	
 }
 
@@ -228,10 +234,9 @@ void Server::handleClient(int index)
 	std::memset(buffer, 0, sizeof(buffer));
 
 	int bytes = recv(pollFds[index].fd, buffer, sizeof(buffer), 0);
-	
+
 	if (bytes <= 0)
 	{
-		std::cout << "Client disconnected FD = " << pollFds[index].fd << std::endl;
 		disconnectClient(fd);
 		return;
 	}
@@ -246,17 +251,9 @@ void Server::handleClient(int index)
 		std::string message = buf.substr(0, pos);
 		buf.erase(0, pos + 2);
 
-		std::cout << "Full message: [" << message << "]" << std::endl;
-
-		// parse
 		ParsedMessage parsedMsg = parseMessage(message);
-		
 
-		//Debug (remove after)
-		std::cout << "CMD: " << parsedMsg.command << " Trailing: " << parsedMsg.trailing << std::endl;
 		routeCommand(fd, parsedMsg);
-		//Exexute
-
 	}
 }
 
@@ -286,6 +283,7 @@ void Server::disconnectClient(int fd)
             break;
         }
     }
+    std::cout << "Client disconnected FD = " << fd << std::endl;
 }
 
 void Server::cleanup()
@@ -307,3 +305,92 @@ void Server::cleanup()
     
     std::cout << "Network: All resources successfully cleaned up." << std::endl;
 }
+
+void    Server::removeMemberFromAllChannels(Client &client)
+{
+    std::map<std::string, Channel*>::iterator it = channels.begin();
+    while (it != channels.end())
+    {
+        if (it->second->ismember(&client))
+        {
+            it->second->removememeber(&client);
+            if (it->second->getmembers().empty())
+            {
+                delete it->second;
+                std::map<std::string, Channel*>::iterator toErase = it;
+                it++;
+                channels.erase(toErase);
+                continue;
+            }
+        }    
+        it++;
+    }
+}
+
+bool   Server::clientExistence(std::string target)
+{
+    if (target.empty() || target[0] == '#')
+        return false;
+
+    for (std::map<int, Client*>::iterator it = clients.begin();
+            it != clients.end(); ++it)
+    {
+        Client* c = it->second;
+        if (c->getNickname() == target)
+            return true;
+    }
+    return false;
+}
+
+bool Server::channelExistence(std::string target)
+{
+    if (target.empty() || target[0] != '#')
+        return false;
+
+    return channels.find(target) != channels.end();
+}
+
+std::map<std::string, Channel*>& Server::getChannels()
+{
+	return (channels);
+};
+
+void	Server::transferMessage(std::string target, const std::string  message, Client &client)
+{
+    if (target[0] != '#')
+    {
+        for (std::map<int, Client*>::iterator it = clients.begin();
+                it != clients.end(); ++it)
+        {
+            Client* c = it->second;
+            if (c->getNickname() == target)
+            {
+                sendToClient(c->getFd(), message);
+                return;
+            }
+        }
+    }
+    else
+    {
+        std::map<std::string, Channel*>& channels = getChannels();
+        std::map<std::string, Channel*>::iterator it = channels.find(target);
+        if (it != channels.end())
+        {
+            Channel* channel = it->second;
+            channel->broadcast(message, &client);
+        }
+    }
+}
+
+Client *Server::getClientNickName(std::string &nickName)
+{
+	std::map<int, Client*>::iterator it = clients.begin();
+	while (it != clients.end())
+	{
+		if (it->second->getNickname() == nickName)
+			return (it->second);
+		it++;
+	}
+	return (NULL);
+}
+
