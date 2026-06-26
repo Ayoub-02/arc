@@ -25,6 +25,9 @@ bool isValidParam(const std::string& param)
     if (param.size() > 9)
         return false;
 
+    if (isnumber(param[0]))
+        return false;
+
     for (size_t i = 0; i < param.size(); i++) 
 	{
 		if(!std::isalnum(static_cast<unsigned char>(param[i])) &&

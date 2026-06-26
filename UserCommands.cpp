@@ -44,10 +44,10 @@ void handleNick(Client& client, const ParsedMessage& cmd, Server& server)
         return;
     }
     client.setNickname(cmd.params[0]);
+    std::string oldNick = client.getNickname();
     if (!client.getNickname().empty() && !client.getUsername().empty())
         client.setIsRegistered(true);
 
-    std::string oldNick = client.getNickname();
 
     std::string msg = oldNick + " changed his nickname to :" + client.getNickname();
     for (std::map<std::string, Channel*>::iterator it = server.getChannels().begin();
@@ -130,7 +130,7 @@ void handlePrivmsg(Client& client, const ParsedMessage& cmd, Server& server)
     std::string target = cmd.params[0];
     const std::string  message = ":" + client.getPrefix() + " PRIVMSG " + target + " :" + cmd.trailing;
 
-    if (target[0] == '#')
+    if (target[0] == '#' || target[0] == '&')
     {
         if (!server.channelExistence(target))
         {

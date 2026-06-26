@@ -174,7 +174,7 @@ ParsedMessage Server::parseMessage(const std::string& rawMessage) {
 CommandType Server::getCommandType(const std::string& cmd)
 {
     if (cmd == "PASS") return CMD_PASS;
-    if (cmd == "NICK") return CMD_NICK;
+    if (cmd == "NICK") return CMD_NICK;   // "4444" passed while it shouldnt
     if (cmd == "USER") return CMD_USER;
     if (cmd == "QUIT") return CMD_QUIT;
     if (cmd == "JOIN") return CMD_JOIN;

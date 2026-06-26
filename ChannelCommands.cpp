@@ -20,7 +20,7 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     }
     std::string channelName = params[0];
     std::string password = (params.size() > 1) ? params[1] : "";
-    if (channelName[0] != '#')
+    if (channelName[0] != '#' && channelName[0] != '&')
     {
         std::string msg = "476 " + client->getNickname() + " " + channelName + " :Bad Channel Mask\r\n";
         send(client->getFd(), msg.c_str(), msg.size(), 0);
@@ -82,9 +82,14 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     std::string names = "353 " + client->getNickname() + " = " + channelName + " :";
     std::vector<Client*> members = channel->getmembers();
     size_t i = 0;
+    std::string finalName;
     while (i < members.size())
     {
-        names += members[i]->getNickname() + " ";
+        if (channel->isoperator(members[i]))
+            finalName = "@" + members[i]->getNickname();
+        else 
+            finalName = members[i]->getNickname();
+        names += finalName + " ";
         i++;
     }
     names+="\r\n";
