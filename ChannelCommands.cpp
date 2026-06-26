@@ -20,7 +20,7 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     }
     std::string channelName = params[0];
     std::string password = (params.size() > 1) ? params[1] : "";
-    if (channelName[0] != '#')
+    if (channelName[0] != '#' && channelName[0] != '&')
     {
         std::string msg = "476 " + client->getNickname() + " " + channelName + " :Bad Channel Mask\r\n";
         send(client->getFd(), msg.c_str(), msg.size(), 0);
@@ -82,9 +82,14 @@ void    handleJoin(Client* client, std::vector<std::string> params, Server* serv
     std::string names = "353 " + client->getNickname() + " = " + channelName + " :";
     std::vector<Client*> members = channel->getmembers();
     size_t i = 0;
+    std::string finalName;
     while (i < members.size())
     {
-        names += members[i]->getNickname() + " ";
+        if (channel->isoperator(members[i]))
+            finalName = "@" + members[i]->getNickname();
+        else
+            finalName = members[i]->getNickname();
+        names += finalName + " ";
         i++;
     }
     names+="\r\n";
@@ -125,12 +130,13 @@ void    handlePart(Client* client, std::vector<std::string> params, std::string 
         send(client->getFd() , msg.c_str() , msg.size() , 0);
         return ;
     }
-    std::string partMsg = ":" + client->getPrefix() + " PART " + channelName;
+    std::string rawMsg = ":" + client->getPrefix() + " PART " + channelName;
     if (!trailing.empty())
-        partMsg += " :" + trailing;
+        rawMsg += " :" + trailing;
+    std::string partMsg = rawMsg;
     partMsg += "\r\n";
     send(client->getFd() , partMsg.c_str() , partMsg.size(), 0);
-    channel->broadcast(partMsg , client);
+    channel->broadcast(rawMsg , client);
 
     channel->removememeber(client);
     if (channel->getmembers().empty())
@@ -308,12 +314,13 @@ void    handleKick(Client* client, std::vector<std::string> params, std::string 
         send(client->getFd(), msg.c_str(), msg.size(), 0);
         return;
     }
-    std::string Kickmsg = ":" + client->getPrefix() + " KICK " + channelName + " " + target;
+    std::string rawMsg = ":" + client->getPrefix() + " KICK " + channelName + " " + target;
     if (!trailing.empty())
-        Kickmsg += (" :" + trailing);
+        rawMsg += (" :" + trailing);
+    std::string Kickmsg = rawMsg;
     Kickmsg += "\r\n";
     send(targetClient->getFd(), Kickmsg.c_str(), Kickmsg.size(), 0);
-    channel->broadcast(Kickmsg, targetClient);
+    channel->broadcast(rawMsg, targetClient);
     channel->removememeber(targetClient);
     if (channel->getmembers().empty())
     {
@@ -346,6 +353,12 @@ void    handleMode(Client* client, std::vector<std::string> params, Server* serv
     }
     Channel *channel = channels[channelName];
     std::string flag = params[1];
+    if (!channel->ismember(client))
+    {
+        std::string msg = "482 " + client->getNickname() + " " + channelName + " :You're not on that channel\r\n";
+        send(client->getFd(), msg.c_str(), msg.size(), 0);
+        return;
+    }
     if (!channel->isoperator(client))
     {
         std::string msg = "482 " + client->getNickname() + " " + channelName + " :You're not channel operator\r\n";
@@ -406,7 +419,6 @@ void    handleMode(Client* client, std::vector<std::string> params, Server* serv
             channel->setpassword("");
             change = true;
         }
-
     }
     else if (mode == 'o')
     {
@@ -487,8 +499,9 @@ void    handleMode(Client* client, std::vector<std::string> params, Server* serv
     }
     if (change)
     {
-        std::string reply = ":" + client->getPrefix() + " MODE " + channelName + " " + sign + mode + modeParam + "\r\n";
-        send(client->getFd(), reply.c_str(), reply.size(), 0);
-        channel->broadcast(reply, client);
+        std::string reply1 = ":" + client->getPrefix() + " MODE " + channelName + " " + sign + mode + modeParam;
+        std::string reply2 = reply1 + "\r\n";
+        send(client->getFd(), reply2.c_str(), reply2.size(), 0);
+        channel->broadcast(reply1, client);
     }
 };
