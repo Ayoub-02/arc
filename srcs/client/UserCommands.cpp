@@ -1,4 +1,4 @@
-#include "UserCommands.hpp"
+#include "../../includes/UserCommands.hpp"
 
 void handlePass(Client& client, const ParsedMessage& cmd, Server& server)
 {

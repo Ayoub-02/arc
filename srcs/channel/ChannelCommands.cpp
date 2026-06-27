@@ -1,6 +1,6 @@
-#include "Client.hpp"
-#include "Channel.hpp"
-#include "Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Server.hpp"
 
 void    handleJoin(Client* client, std::vector<std::string> params, Server* server)
 {

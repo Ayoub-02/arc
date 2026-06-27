@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../../includes/Server.hpp"
 
 Server::NetworkException::NetworkException(const char* _msg) : msg(_msg) {}
 
